@@ -13,6 +13,14 @@ type ShiftResults = {
   balance: number;
 };
 
+type SupplyBar = {
+  label: string;
+  value: number;
+  color: string;
+  labelY: number;
+  barY: number;
+};
+
 function calculateProduction(producers: number): number {
   return producers * 3;
 }
@@ -34,7 +42,7 @@ function drawCrewAssignments(producers: number): void {
   for (let i = 0; i < 6; i++) {
     ctx.fillStyle = i < producers ? "#27766b" : "#c9d2c9";
     ctx.fillRect(18 + i * 45, 16, 36, 36);
-    ctx.fillStyle = i < assignedProducers ? "#ffffff" : "#233e43";
+    ctx.fillStyle = i < producers ? "#ffffff" : "#233e43";
     ctx.font = "16px system-ui";
     ctx.fillText(String(i + 1), 31 + i * 45, 40);
   }
@@ -47,6 +55,33 @@ function updateAllocationReadout(results: ShiftResults): void {
     }${results.balance}`;
 }
 
+function drawSupplyBars(results: ShiftResults): void {
+  const bars: SupplyBar[] = [
+    {
+      label: "Production",
+      value: results.production,
+      color: "#27766b",
+      labelY: 102,
+      barY: 110,
+    },
+    {
+      label: "Consumption",
+      value: results.consumption,
+      color: "#a44d23",
+      labelY: 154,
+      barY: 162,
+    },
+  ];
+
+  for (const bar of bars) {
+    ctx.fillStyle = "#233e43";
+    ctx.fillText(`${bar.label}: ${bar.value}`, 18, bar.labelY);
+
+    ctx.fillStyle = bar.color;
+    ctx.fillRect(18, bar.barY, bar.value * 14, 20);
+  }
+}
+
 function renderAllocation(): void {
   const results = calculateShiftResults(assignedProducers);
 
@@ -57,16 +92,7 @@ function renderAllocation(): void {
   ctx.font = "14px system-ui";
 
   ctx.fillText(`Producers: ${results.assignedProducers} / 6`, 18, 76);
-  ctx.fillText(`Production: ${results.production}`, 18, 102);
-
-  ctx.fillStyle = "#27766b";
-  ctx.fillRect(18, 110, results.production * 14, 20);
-
-  ctx.fillStyle = "#233e43";
-  ctx.fillText(`Consumption: ${results.consumption}`, 18, 154);
-
-  ctx.fillStyle = "#a44d23";
-  ctx.fillRect(18, 162, results.consumption * 14, 20);
+  drawSupplyBars(results);
 
   updateAllocationReadout(results);
 }
