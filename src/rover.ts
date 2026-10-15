@@ -3,6 +3,14 @@ export {};
 const canvas = document.querySelector<HTMLCanvasElement>("#rover-canvas")!;
 const ctx = canvas.getContext("2d")!;
 const readout = document.querySelector<HTMLParagraphElement>("#rover-readout")!;
+const pendingList = document.querySelector<HTMLOListElement>(
+  "#rover-pending",
+)!;
+const queueStatus = document.querySelector<HTMLParagraphElement>(
+  "#rover-queue-status",
+)!;
+const runButton = document.querySelector<HTMLButtonElement>("#rover-run")!;
+const clearButton = document.querySelector<HTMLButtonElement>("#rover-clear")!;
 type RoverDirection = {
   name: string;
   dx: number;
@@ -65,22 +73,62 @@ const rightCommand: RoverCommand = {
   },
 };
 
+const pendingCommands: RoverCommand[] = [];
+
+function renderQueue(): void {
+  pendingList.replaceChildren();
+
+  for (const command of pendingCommands) {
+    const item = document.createElement("li");
+    item.textContent = command.label;
+    pendingList.appendChild(item);
+  }
+
+  queueStatus.textContent = pendingCommands.length === 0
+    ? "Empty"
+    : `${pendingCommands.length} pending commands`;
+}
+
 function runCommand(command: RoverCommand): void {
   command.execute();
   drawRover();
 }
 
 document.querySelector<HTMLButtonElement>("#rover-forward")!.onclick = () => {
-  runCommand(forwardCommand);
+  pendingCommands.push(forwardCommand);
+  renderQueue();
 };
 
 document.querySelector<HTMLButtonElement>("#rover-right")!.onclick = () => {
-  runCommand(rightCommand);
+  pendingCommands.push(rightCommand);
+  renderQueue();
 };
+
+runButton.onclick = () => {
+  for (const command of pendingCommands) {
+    runCommand(command);
+  }
+
+  pendingCommands.length = 0;
+  renderQueue();
+};
+
+clearButton.onclick = () => {
+  pendingCommands.length = 0;
+  renderQueue();
+};
+
 document.querySelector<HTMLButtonElement>("#rover-reset")!.onclick = () => {
   x = 2;
   y = 2;
   direction = 0;
+  pendingCommands.length = 0;
   drawRover();
+  renderQueue();
 };
+
+runButton.disabled = false;
+clearButton.disabled = false;
+
 drawRover();
+renderQueue();
