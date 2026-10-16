@@ -11,6 +11,8 @@ const diagnostic = document.querySelector<HTMLParagraphElement>(
 )!;
 
 const SHIELD_CAPACITY = 10;
+const shieldEvents = new EventTarget();
+const SHIELD_CHANGED = "shieldchange";
 
 type ShieldSnapshot = {
   charge: number;
@@ -50,6 +52,11 @@ function drawMeter(snapshot: ShieldSnapshot): void {
     `Shield charge: ${snapshot.charge} / ${snapshot.capacity}`;
 }
 
+shieldEvents.addEventListener(SHIELD_CHANGED, (event: Event) => {
+  const snapshot = (event as CustomEvent<ShieldSnapshot>).detail;
+  drawMeter(snapshot);
+});
+
 function updateStats(snapshot: ShieldSnapshot): void {
   panelUpdates++;
   diagnostic.textContent = `Inspector deliveries: ${panelUpdates}`;
@@ -72,7 +79,11 @@ function setCount(next: number): void {
 
   const snapshot = getShieldSnapshot(count);
 
-  drawMeter(snapshot);
+  shieldEvents.dispatchEvent(
+    new CustomEvent<ShieldSnapshot>(SHIELD_CHANGED, {
+      detail: snapshot,
+    }),
+  );
 
   if (panel) {
     updateStats(snapshot);
